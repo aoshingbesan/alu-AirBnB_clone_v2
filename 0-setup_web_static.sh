@@ -1,22 +1,14 @@
 #!/usr/bin/env bash
-# Install nginx and create a fake html file
+# Write a Bash script that sets up your web servers for the deployment of web_static
 
-link_dir="/data/web_static/current"
-release_folder="/data/web_static/releases/test"
-HTML_CONTENT="<html>
-    <head>
-    </head>
-    <body>
-	My fake html file
-    </body>
-</html>"
+apt-get update
+apt-get -y install nginx
 
-apt-get -y update >/dev/null 2>&1
-apt-get -y install nginx >/dev/null 2>&1
 mkdir -p /data/web_static/releases/test/
 mkdir -p /data/web_static/shared/
-echo "$HTML_CONTENT" >/data/web_static/releases/test/index.html
-ln -sf "$release_folder" "$link_dir"
+
+echo "<h1>Abimbola Ronald</h1>" > /data/web_static/releases/test/index.html
+ln -sf /data/web_static/releases/test/ /data/web_static/current
 chown -R ubuntu:ubuntu /data/
-sed -i '/^server {/,/^}/!b;/^}/i\\tlocation \/hbnb_static\/ {\n\t\talias \/data\/web_static\/current\/;\n\t}' /etc/nginx/sites-enabled/default
-service nginx restart
+sudo sed -i '/listen 80 default_server/a location /hbnb_static { alias /data/web_static/current/;}' /etc/nginx/sites-enabled/default
+sudo service nginx restart

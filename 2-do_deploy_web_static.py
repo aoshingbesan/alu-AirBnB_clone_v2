@@ -1,57 +1,46 @@
 #!/usr/bin/python3
-'''Fabric file to deploy web static
-
-do_pack: Creates an archive of the web_static directory
-do_deploy: Moves an archive to the web servers
-'''
-from fabric.api import *
-from datetime import datetime
-import os
+"""Deploy web static to different servers"""
+import re
+from fabric.context_managers import cd
+from fabric.api import env, put, run, sudo
+from os.path import join, exists, splitext
 
 
-env.hosts = [
-    '54.221.44.233',
-    '3.84.126.21'
-]
-env.user = 'ubuntu'
+env.user = "ubuntu"
+env.hosts = ["54.242.215.110", "34.229.154.33"]
 env.key_filename = '~/.ssh/id_rsa'
 
 
-def do_pack():
-    ''' Creates an archive of the web_static directory
-    Using format:
-        versions/web_static_<year><month><day><hour><minute><second>.tgz
-    '''
-    local("mkdir -p versions")
-    archive_path = "versions/web_static_{}.tgz".format(
-        datetime.now().strftime('%Y%m%d%H%M%S'))
-    result = local("tar -cvzf {} web_static".format(archive_path))
-
-    if result.succeeded:
-        return archive_path
-    return None
-
-
 def do_deploy(archive_path):
-    '''Tranfers archives to the web servers
-    '''
-    if not os.path.exists(archive_path):
+    """
+    Deploy a compressed archive to a remote server.
+    Args:
+        archive_path (str): The path to the compressed archive.
+    Returns:
+        bool: True if the deployment is successful, False otherwise.
+    """
+
+    if not exists(archive_path):
         return False
-    arch_name = archive_path.split('/')[-1]
-    dir_name = arch_name.replace(".tgz", "")
+
     try:
-        put(local_path=archive_path, remote_path="/tmp/")
-        run("mkdir -p /data/web_static/releases/{}".format(dir_name))
-        run("tar -xzf /tmp/{} -C /data/web_static/releases/{}/".format(
-            arch_name, dir_name))
-        run("rm /tmp/{}".format(arch_name))
-        run("mv /data/web_static/releases/{}/web_static/*\
-        /data/web_static/releases/{}/".format(dir_name, dir_name))
-        run("rm -rf /data/web_static/releases/{}/web_static".format(
-            dir_name))
-        run("rm -rf /data/web_static/current")
-        run("ln -s /data/web_static/releases/{}\
-        /data/web_static/current".format(dir_name))
-    except Exception:
+        put(archive_path, "/tmp/")
+        file_name = re.search(r'[^/]+$', archive_path).group(0)
+        deploy_path = join("/data/web_static/releases/",
+                            splitext(file_name)[0])
+        sudo("mkdir -p {}".format(deploy_path))
+
+        sudo("tar -xzf /tmp/{} -C {}".format(file_name, deploy_path))
+
+        with cd(deploy_path):
+            run("mv web_static/* .")
+            sudo("rm -rf web_static")
+
+        sudo("rm /tmp/{}".format(file_name))
+        sudo("rm -rf /data/web_static/current")
+
+        sudo('ln -sf {} /data/web_static/current'.format(deploy_path))
+    except Exception as err:
         return False
+
     return True
