@@ -7,8 +7,8 @@ from os.path import join, exists, splitext
 
 
 env.user = "ubuntu"
-env.hosts = ["54.242.215.110", "34.229.154.33"]
-env.key_filename = '~/.ssh/id_rsa'
+env.hosts = ["54.242.151.219", "54.197.202.252"]
+#env.key_filename = '~/.ssh/id_rsa'
 
 
 def do_deploy(archive_path):
@@ -27,13 +27,13 @@ def do_deploy(archive_path):
         put(archive_path, "/tmp/")
         file_name = re.search(r'[^/]+$', archive_path).group(0)
         deploy_path = join("/data/web_static/releases/",
-                            splitext(file_name)[0])
+                           splitext(file_name)[0])
         sudo("mkdir -p {}".format(deploy_path))
 
         sudo("tar -xzf /tmp/{} -C {}".format(file_name, deploy_path))
 
         with cd(deploy_path):
-            run("mv web_static/* .")
+            sudo("mv web_static/* .")
             sudo("rm -rf web_static")
 
         sudo("rm /tmp/{}".format(file_name))
