@@ -1,4 +1,5 @@
-bric file to deploy web static
+#!/usr/bin/python3
+'''Fabric file to deploy web static
 
 do_pack: Creates an archive of the web_static directory
 do_deploy: Moves an archive to the web servers
