@@ -8,7 +8,7 @@ from os.path import join, exists, splitext
 
 env.user = "ubuntu"
 env.hosts = ["54.242.151.219", "54.197.202.252"]
-#env.key_filename = '~/.ssh/id_rsa'
+env.key_filename = '~/.ssh/id_rsa'
 
 
 def do_deploy(archive_path):
